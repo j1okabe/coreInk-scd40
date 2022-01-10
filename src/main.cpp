@@ -70,7 +70,7 @@ Ink_Sprite MainPageSprite(&M5.M5Ink);
 
 bool setupCalibMode = false;
 bool updateRTC = false;
-uint16_t ascEn = 1;
+uint16_t ascEn = 0;
 const int SCD4X_FRC_CO2_PPM = 400;
 
 enum D_TYPE { D_TYPE_CO2, D_TYPE_TEMP, D_TYPE_HUMI, D_TYPE_MAX };
