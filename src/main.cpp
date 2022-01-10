@@ -70,7 +70,7 @@ Ink_Sprite MainPageSprite(&M5.M5Ink);
 
 bool setupCalibMode = false;
 bool updateRTC = false;
-uint16_t ascEn = 0;
+uint16_t ascEn = 1;
 const int SCD4X_FRC_CO2_PPM = 400;
 
 enum D_TYPE { D_TYPE_CO2, D_TYPE_TEMP, D_TYPE_HUMI, D_TYPE_MAX };
@@ -109,6 +109,7 @@ float getBattVoltage() {
 
   uint32_t BattVolmV = esp_adc_cal_raw_to_voltage(ADCValue, adc_chars);
   float battVol = float(BattVolmV) * 25.1 / 5.1 / 1000;
+  free(adc_chars);
   return battVol;
 }
 
@@ -193,7 +194,8 @@ void setupNetwork() {
   Serial.println(WiFi.localIP());
   if (updateRTC) {
     configTzTime(TZSTR, "ntp.nict.jp", "ntp.jst.mfeed.ad.jp");
-    getLocalTime(&timeInfo);                 // 時刻取得
+    getLocalTime(&timeInfo);  // 時刻取得
+    Serial.print("\r\ntime adjusted \r\n");
     RTCDate.Year = timeInfo.tm_year + 1900;  // 年
     RTCDate.Month = timeInfo.tm_mon + 1;     // 月
     RTCDate.Date = timeInfo.tm_mday;         // 日
@@ -211,7 +213,7 @@ void setupNetwork() {
   snprintf(timeStrbuff, sizeof(timeStrbuff), "%d/%02d/%02d %02d:%02d:%02d",
            RTCDate.Year, RTCDate.Month, RTCDate.Date, RTCtime.Hours,
            RTCtime.Minutes, RTCtime.Seconds);
-
+  Serial.println(timeStrbuff);
   MainPageSprite.drawString(4, 2, timeStrbuff);
   // MainPageSprite.drawString(84, 16, "WiFi connected");
   MainPageSprite.pushSprite();
@@ -225,8 +227,8 @@ void setupSCD4x() {
   char errorMessage[256];
   uint16_t frcCorrection;
 
-  Wire1.begin(I2C_SDA_PIN, I2C_SCL_PIN);
-  scd4x.begin(Wire1);
+  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+  scd4x.begin(Wire);
 
   // stop potentially previously started measurement
   error = scd4x.stopPeriodicMeasurement();
@@ -237,9 +239,23 @@ void setupSCD4x() {
     current_sts = D_STS_READ_DATA_ERR;
   }
 
-  error = scd4x.getAutomaticSelfCalibration(ascEn);
+  // error = scd4x.getAutomaticSelfCalibration(ascEn);
+  // if (error) {
+  //   Serial.print("Error trying to execute getAutomaticSelfCalibration(): ");
+  //   errorToString(error, errorMessage, 256);
+  //   Serial.println(errorMessage);
+  //   current_sts = D_STS_READ_DATA_ERR;
+  // }
+  error = scd4x.setAutomaticSelfCalibration(ascEn);
   if (error) {
-    Serial.print("Error trying to execute getAutomaticSelfCalibration(): ");
+    Serial.print("Error trying to execute setAutomaticSelfCalibration(): ");
+    errorToString(error, errorMessage, 256);
+    Serial.println(errorMessage);
+    current_sts = D_STS_READ_DATA_ERR;
+  }
+  error = scd4x.persistSettings();
+  if (error) {
+    Serial.print("Error trying to execute persistSettings(): ");
     errorToString(error, errorMessage, 256);
     Serial.println(errorMessage);
     current_sts = D_STS_READ_DATA_ERR;
@@ -452,6 +468,7 @@ void setup() {
     Serial.println();
     M5.shutdown(t_sleep_s);
   } else {
+    drawStatus(current_sts);
     M5.shutdown();
   }
 }
