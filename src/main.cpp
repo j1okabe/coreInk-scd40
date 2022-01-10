@@ -14,7 +14,7 @@
 #include <WiFiMulti.h>
 
 #include "Ambient.h"
-#include "mysettings.h"
+#include "settings.h"
 const char* TZSTR = "JST-9";
 #endif /* defined(UPLOAD_DATA_EN) */
 
