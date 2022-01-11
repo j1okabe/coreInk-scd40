@@ -239,26 +239,29 @@ void setupSCD4x() {
     current_sts = D_STS_READ_DATA_ERR;
   }
 
-  // error = scd4x.getAutomaticSelfCalibration(ascEn);
-  // if (error) {
-  //   Serial.print("Error trying to execute getAutomaticSelfCalibration(): ");
-  //   errorToString(error, errorMessage, 256);
-  //   Serial.println(errorMessage);
-  //   current_sts = D_STS_READ_DATA_ERR;
-  // }
-  error = scd4x.setAutomaticSelfCalibration(ascEn);
+  error = scd4x.getAutomaticSelfCalibration(ascEn);
   if (error) {
-    Serial.print("Error trying to execute setAutomaticSelfCalibration(): ");
+    Serial.print("Error trying to execute getAutomaticSelfCalibration(): ");
     errorToString(error, errorMessage, 256);
     Serial.println(errorMessage);
     current_sts = D_STS_READ_DATA_ERR;
   }
-  error = scd4x.persistSettings();
-  if (error) {
-    Serial.print("Error trying to execute persistSettings(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-    current_sts = D_STS_READ_DATA_ERR;
+  if (1 == ascEn) {
+    ascEn = 0;
+    error = scd4x.setAutomaticSelfCalibration(ascEn);
+    if (error) {
+      Serial.print("Error trying to execute setAutomaticSelfCalibration(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+      current_sts = D_STS_READ_DATA_ERR;
+    }
+    error = scd4x.persistSettings();
+    if (error) {
+      Serial.print("Error trying to execute persistSettings(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+      current_sts = D_STS_READ_DATA_ERR;
+    }
   }
 
   if (setupCalibMode) {
