@@ -70,7 +70,7 @@ Ink_Sprite MainPageSprite(&M5.M5Ink);
 
 bool setupCalibMode = false;
 bool updateRTC = false;
-uint16_t ascEn = 1;
+uint16_t ascEn = 0;
 const int SCD4X_FRC_CO2_PPM = 400;
 
 enum D_TYPE { D_TYPE_CO2, D_TYPE_TEMP, D_TYPE_HUMI, D_TYPE_MAX };
@@ -239,26 +239,29 @@ void setupSCD4x() {
     current_sts = D_STS_READ_DATA_ERR;
   }
 
-  // error = scd4x.getAutomaticSelfCalibration(ascEn);
-  // if (error) {
-  //   Serial.print("Error trying to execute getAutomaticSelfCalibration(): ");
-  //   errorToString(error, errorMessage, 256);
-  //   Serial.println(errorMessage);
-  //   current_sts = D_STS_READ_DATA_ERR;
-  // }
-  error = scd4x.setAutomaticSelfCalibration(ascEn);
+  error = scd4x.getAutomaticSelfCalibration(ascEn);
   if (error) {
-    Serial.print("Error trying to execute setAutomaticSelfCalibration(): ");
+    Serial.print("Error trying to execute getAutomaticSelfCalibration(): ");
     errorToString(error, errorMessage, 256);
     Serial.println(errorMessage);
     current_sts = D_STS_READ_DATA_ERR;
   }
-  error = scd4x.persistSettings();
-  if (error) {
-    Serial.print("Error trying to execute persistSettings(): ");
-    errorToString(error, errorMessage, 256);
-    Serial.println(errorMessage);
-    current_sts = D_STS_READ_DATA_ERR;
+  if (1 == ascEn) {
+    ascEn = 0;
+    error = scd4x.setAutomaticSelfCalibration(ascEn);
+    if (error) {
+      Serial.print("Error trying to execute setAutomaticSelfCalibration(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+      current_sts = D_STS_READ_DATA_ERR;
+    }
+    error = scd4x.persistSettings();
+    if (error) {
+      Serial.print("Error trying to execute persistSettings(): ");
+      errorToString(error, errorMessage, 256);
+      Serial.println(errorMessage);
+      current_sts = D_STS_READ_DATA_ERR;
+    }
   }
 
   if (setupCalibMode) {
